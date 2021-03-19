@@ -5,25 +5,34 @@ from PIL import Image
 import numpy as np
 
 ######CONSTANTS######
-ACTIONS=['NA','Han', 'Hugging', 'Reading', 'Drinking',
-         'Pushing/Pulling', 'Carrying', 'Calling','Running',
-         'Walking', 'Lying', 'Sitting', 'Standing']
+def get_constants(path):
 
-ACTIONS_ID={a:i for i,a in enumerate(ACTIONS)}
-ACTIONS_ID['NA'] = -1
+  """
+  path: contains all the extracted frames
+  """
+  ACTIONS=['NA','Han', 'Hugging', 'Reading', 'Drinking',
+           'Pushing/Pulling', 'Carrying', 'Calling','Running',
+           'Walking', 'Lying', 'Sitting', 'Standing']
 
-# create a dictionary containg frame num corresponding to video names
-FRAMES_NUM = {}
-#for name in glob('/content/drive/MyDrive/Train-Set/*/*/Extracted-Frames-1280x720/*'):
-for name in glob("""enter path"""):
-  key = name.split('/')[-1]
-  FRAMES_NUM[key] = len(os.listdir(name))
+  ACTIONS_ID={a:i for i,a in enumerate(ACTIONS)}
+  ACTIONS_ID['NA'] = -1
+
+  # create a dictionary containg frame num corresponding to video names
+  FRAMES_NUM = {}
+  #for name in glob('/content/drive/MyDrive/Train-Set/*/*/Extracted-Frames-1280x720/*'):
+  for name in glob(path):
+    key = name.split('/')[-1]
+    FRAMES_NUM[key] = len(os.listdir(name))
+
+  return ACTIONS_ID, FRAMES_NUM
 
 ######################
 
 def okutama_read_annotations(path,vidname, img_path):
     annotations={}
     path=path + '/%s.txt' % vidname
+
+    ACTIONS_ID, FRAMES_NUM = get_constants(img_path)
     
     with open(path,mode='r') as f:
         frame_id=None
@@ -91,6 +100,8 @@ class OkutamaDataset(data.Dataset):
         self.num_frames=num_frames
         
         self.is_training=is_training
+
+        ACTIONS_ID, FRAMES_NUM = get_constants(images_path)
         #self.batch_per_video = int(len(self.frames) / self.num_frames)
 
     
