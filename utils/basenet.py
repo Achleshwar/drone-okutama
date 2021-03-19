@@ -8,8 +8,8 @@ import torch.nn.functional as F
 
 import numpy as np
 
-from backbone import *
-from datautils import *
+from utils.backbone import *
+from utils.datautils import *
 
 
 class Basenet_okutama(nn.Module):
