@@ -4,6 +4,11 @@ import random
 from PIL import Image
 import numpy as np
 
+import torch
+from torch.utils import data
+import torchvision.transforms as transforms
+from torch.utils.data import DataLoader
+
 ######CONSTANTS######
 def get_constants(path):
 
@@ -60,10 +65,10 @@ def okutama_read_annotations(path,vidname, img_path):
                 actions.append(ACTIONS_ID[str_actions])
               else:
                 actions.append(-1) # -1 --> NA
-              x,y,w,h = (int(values[i])  for i  in range(1,5))
-              H,W=(3840, 2160)
+              x1, y1, x2, y2 = (int(values[i])  for i  in range(1,5))
+              W,H=(3840, 2160)
               
-              bboxes.append((y/H,x/W,(y+h)/H,(x+w)/W))
+              bboxes.append((x1/W,y1/H,x2/W,y2/H))
 
               annotations[frame_id]={
                         'frame_id':frame_id,
@@ -118,7 +123,8 @@ class OkutamaDataset(data.Dataset):
         """
         Generate one sample of the dataset
         """
-        if self.frames[index * self.num_frames][0] == self.frames[(index+1)*self.num_frames][0]:
+        if self.frames[index * self.num_frames][0] == self.frames[(index+1)*self.num_frames][0]: 
+          # conditional check to get frames from same video
           select_frames=self.get_frames(self.frames[index * self.num_frames])
           
           sample=self.load_samples_sequence(select_frames)
@@ -132,10 +138,6 @@ class OkutamaDataset(data.Dataset):
           # 10 - (2272 -2270) = 8 frames 
           # print("no. of frames: ", FRAMES_NUM[self.frames[index * self.num_frames][0]])
           # print(index*self.num_frames)
-
-          # print(diff)
-
-          vidname, src_fid = self.frames[index * self.num_frames]
 
 
           sample_frames = [i for i in range(src_fid - diff, src_fid -diff + self.num_frames)]
@@ -168,7 +170,7 @@ class OkutamaDataset(data.Dataset):
         Returns:
             tensors
         """
-        OH, OW=self.feature_size
+        OW, OH=self.feature_size
         
         images, bboxes = [], []
         actions = []
@@ -179,7 +181,7 @@ class OkutamaDataset(data.Dataset):
 
             if os.path.exists(self.images_path + '/%s/%d.jpg'%(vidname,fid)):
               img = Image.open(self.images_path + '/%s/%d.jpg'%(vidname,fid))
-
+            #CONDITION NOT NECESSARY
             else:
               img = Image.open(self.images_path + '/%s/%d.jpg'%(vidname,fid - 1))
 
@@ -192,7 +194,7 @@ class OkutamaDataset(data.Dataset):
             
             temp_boxes=[]
             for box in self.anns[vidname][src_fid]['bboxes']:
-                y1,x1,y2,x2=box
+                x1,y1,x2,y2 = box
                 w1,h1,w2,h2 = x1*OW, y1*OH, x2*OW, y2*OH  
                 temp_boxes.append((w1,h1,w2,h2))
                 
@@ -200,7 +202,8 @@ class OkutamaDataset(data.Dataset):
             bboxes_num.append(len(temp_boxes))
 
             if len(temp_boxes) > self.num_boxes:
-              #print('Error: More than 12 actions present')
+              print('Error: More than 12 actions present')
+              print("No. of actions are : ", len(temp_boxes))
               temp_boxes = temp_boxes[:self.num_boxes]
             
             while len(temp_boxes)!=self.num_boxes:
