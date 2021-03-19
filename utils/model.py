@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-from datautils import *
+from utils.datautils import *
 
 def set_bn_eval(m):
     classname = m.__class__.__name__
@@ -12,6 +12,38 @@ def adjust_lr(optimizer, new_lr):
     print('change learning rate:',new_lr)
     for param_group in optimizer.param_groups:
         param_group['lr'] = new_lr
+
+class AverageMeter(object):
+    """
+    Computes the average value
+    """
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
+        
+
+class Timer(object):
+    """
+    class to do timekeeping
+    """
+    def __init__(self):
+        self.last_time=time.time()
+        
+    def timeit(self):
+        old_time=self.last_time
+        self.last_time=time.time()
+        return self.last_time-old_time
 
 def train_okutama(data_loader, model, device, optimizer, epoch):
     

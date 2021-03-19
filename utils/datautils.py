@@ -123,36 +123,3 @@ def log_final_exp_result(log_path, data_path, exp_result):
     data_dict=pickle.load(open(data_path, 'rb'))
     data_dict[exp_result['cfg'].exp_name]=exp_result
     pickle.dump(data_dict, open(data_path, 'wb'))
-        
-    
-class AverageMeter(object):
-    """
-    Computes the average value
-    """
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self.val = 0
-        self.avg = 0
-        self.sum = 0
-        self.count = 0
-
-    def update(self, val, n=1):
-        self.val = val
-        self.sum += val * n
-        self.count += n
-        self.avg = self.sum / self.count
-        
-
-class Timer(object):
-    """
-    class to do timekeeping
-    """
-    def __init__(self):
-        self.last_time=time.time()
-        
-    def timeit(self):
-        old_time=self.last_time
-        self.last_time=time.time()
-        return self.last_time-old_time
