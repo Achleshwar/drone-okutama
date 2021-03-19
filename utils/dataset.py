@@ -93,7 +93,7 @@ class OkutamaDataset(data.Dataset):
     Characterize collective dataset for pytorch
     """
     def __init__(self,anns,frames,images_path,feature_size,
-                 image_size = (512,512), num_boxes=12,num_frames=5,is_training=True):
+                 image_size = (720,420), num_boxes=12,num_frames=5,is_training=True):
       
         self.anns=anns
         self.frames=frames
@@ -232,8 +232,8 @@ class OkutamaDataset(data.Dataset):
 def get_dataloaders(train_seqs, test_seqs, train_images_path, test_images_path):
 
   s = 5
-  image_size = int(3840 / s), int(2160 / s)  #input image size
-  out_size = 87, 157  #output feature map size of backbone
+  image_size = 720, 420  #input image size
+  out_size = 157, 87  #output feature map size of backbone
 
 
   # train data

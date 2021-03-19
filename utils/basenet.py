@@ -19,7 +19,7 @@ class Basenet_okutama(nn.Module):
     def __init__(self):
         super(Basenet_okutama, self).__init__()
         
-        D=512 #output feature map channel of backbone
+        D=1056 #output feature map channel of backbone
         K=5 #crop size of roi align
         NFB=1024
         
@@ -74,16 +74,14 @@ class Basenet_okutama(nn.Module):
         
         T=images_in.shape[1]
         # print("T = ", T)
-        s = 5
-        H, W= int(3840 / s), int(2160 / s)
-        OH, OW=87,157
-        MAX_N=12
-        NFB=1024
+        W, H = 720, 420 # input image size
+        OW, OH = 157, 87 # output feature dimenion (backbone output)
+        MAX_N=12 # no. of actions per frame
+        NFB=1024 # features of boxes
         EPS=1e-5
         
-        # D=1056
-        D=512
-        K=5
+        D=1056 # features dimenion (emb layer)
+        K=5 #crop size
         
         # Reshape the input data
         images_in_flat=torch.reshape(images_in,(B*T,3,H,W))  #B*T, 3, H, W
@@ -167,12 +165,7 @@ class Basenet_okutama(nn.Module):
 
             # print("shape of actn_score = ",actn_score.shape)
             # actions_scores.append(actn_score)
-            # print(len(actions_scores))
-            # # Predict activities
-            # boxes_states_pooled,_=torch.max(boxes_states,dim=1)  #1, NFS
-            # boxes_states_pooled_flat=boxes_states_pooled.reshape(-1,NFS)  #1, NFS
-            # acty_score=self.fc_activities(boxes_states_pooled_flat)  #1, acty_num
-            # activities_scores.append(acty_score)
+            # print(len(actions_scores)
 
         # npaction_scores = np.array(actions_scores)
         # print("numpy array shape = ",npaction_scores[0].shape)
