@@ -10,7 +10,7 @@ import numpy as np
 
 from utils.backbone import *
 from utils.datautils import *
-
+from roi_align_n.roi_align import *      # RoIAlign module
 
 class Basenet_okutama(nn.Module):
     """
