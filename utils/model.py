@@ -1,4 +1,7 @@
+import torch
+import torch.nn as nn
 from torch.autograd import Variable
+from datautils import *
 
 def set_bn_eval(m):
     classname = m.__class__.__name__
