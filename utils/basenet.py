@@ -84,7 +84,7 @@ class Basenet_okutama(nn.Module):
         K=5 #crop size
         
         # Reshape the input data
-        images_in_flat=torch.reshape(images_in,(B*T,3,H,W))  #B*T, 3, H, W
+        images_in_flat=torch.reshape(images_in,(B*T,3,W, H))  #B*T, 3, H, W
         boxes_in=boxes_in.reshape(B*T,MAX_N,4)
                 
         # Use backbone to extract features of images_in
@@ -99,11 +99,11 @@ class Basenet_okutama(nn.Module):
         features_multiscale=[]
         for features in outputs:
             # print(features.shape)
-            if features.shape[2:4]!=torch.Size([OH,OW]):
-                features=F.interpolate(features,size=(OH,OW),mode='bilinear',align_corners=True)
+            if features.shape[2:4]!=torch.Size([OW,OH]):
+                features=F.interpolate(features,size=(OW,OH),mode='bilinear',align_corners=True)
             features_multiscale.append(features)
         
-        features_multiscale=torch.cat(features_multiscale,dim=1)  #B*T, D, OH, OW
+        features_multiscale=torch.cat(features_multiscale,dim=1)  #B*T, D, OW, OH
         # print("shape of features_multiscale = ", features_multiscale.shape)
 
         boxes_in_flat=torch.reshape(boxes_in,(B*T*MAX_N,4))  #B*T*MAX_N, 4
