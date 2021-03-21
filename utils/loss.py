@@ -8,6 +8,14 @@ def binary_cross_entropy(predictions, target):
     target: (batch * num_frames, nboxes)
     '''
 
+    if torch.cuda.is_available():
+        predictions = predictions.to(device = "cuda")
+        target = target.to(device = "cuda")
+
+    else:
+        predictions = predictions.to(device = "cpu")
+        target = target.to(device = "cpu")
+
     bce_criterion = nn.BCEWithLogitsLoss()
     loss = 0
     for bt in range(predictions.size(0)):
