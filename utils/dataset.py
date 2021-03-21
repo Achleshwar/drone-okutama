@@ -9,29 +9,6 @@ from torch.utils import data
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
-######CONSTANTS######
-# def get_constants(path):
-
-#   """
-#   path: contains all the extracted frames
-#   """
-#   ACTIONS=['NA','Han', 'Hugging', 'Reading', 'Drinking',
-#            'Pushing/Pulling', 'Carrying', 'Calling','Running',
-#            'Walking', 'Lying', 'Sitting', 'Standing']
-
-#   ACTIONS_ID={a:i for i,a in enumerate(ACTIONS)}
-#   # ACTIONS_ID['NA'] = -1
-
-#   # create a dictionary containg frame num corresponding to video names
-#   FRAMES_NUM = {}
-#   #for name in glob('/content/drive/MyDrive/Train-Set/*/*/Extracted-Frames-1280x720/*'):
-#   for name in glob(path):
-#     key = name.split('/')[-1]
-#     FRAMES_NUM[key] = len(os.listdir(name))
-
-#   return ACTIONS_ID, FRAMES_NUM
-
-
 ACTIONS=['NA','Han', 'Hugging', 'Reading', 'Drinking',
          'Pushing/Pulling', 'Carrying', 'Calling','Running',
          'Walking', 'Lying', 'Sitting', 'Standing']
@@ -42,7 +19,7 @@ ACTIONS_ID={a:i for i,a in enumerate(ACTIONS)}
 # create a dictionary containg frame num corresponding to video names
 FRAMES_NUM = {}
 #for name in glob('/content/drive/MyDrive/Train-Set/*/*/Extracted-Frames-1280x720/*'):
-for name in glob(path):
+for name in glob('/content/drive/MyDrive/Drone-Action/all-frames/*'):
   key = name.split('/')[-1]
   FRAMES_NUM[key] = len(os.listdir(name))
 
