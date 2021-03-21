@@ -36,7 +36,9 @@ def get_constants(path):
 def okutama_read_annotations(path,vidname, img_path):
     annotations={}
     path=path + '/%s.txt' % vidname
-    
+    ACTIONS_ID, FRAMES_NUM = get_constants('/content/drive/MyDrive/Drone-Action/all-frames/*')
+
+
     with open(path,mode='r') as f:
         frame_id=None
         frame_nos = []
@@ -103,6 +105,8 @@ class OkutamaDataset(data.Dataset):
         self.num_frames=num_frames
         
         self.is_training=is_training
+
+        ACTIONS_ID, FRAMES_NUM = get_constants('/content/drive/MyDrive/Drone-Action/all-frames/*')
         #self.batch_per_video = int(len(self.frames) / self.num_frames)
 
     
