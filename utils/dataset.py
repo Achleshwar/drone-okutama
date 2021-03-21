@@ -10,33 +10,48 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
 ######CONSTANTS######
-def get_constants(path):
+# def get_constants(path):
 
-  """
-  path: contains all the extracted frames
-  """
-  ACTIONS=['NA','Han', 'Hugging', 'Reading', 'Drinking',
-           'Pushing/Pulling', 'Carrying', 'Calling','Running',
-           'Walking', 'Lying', 'Sitting', 'Standing']
+#   """
+#   path: contains all the extracted frames
+#   """
+#   ACTIONS=['NA','Han', 'Hugging', 'Reading', 'Drinking',
+#            'Pushing/Pulling', 'Carrying', 'Calling','Running',
+#            'Walking', 'Lying', 'Sitting', 'Standing']
 
-  ACTIONS_ID={a:i for i,a in enumerate(ACTIONS)}
-  # ACTIONS_ID['NA'] = -1
+#   ACTIONS_ID={a:i for i,a in enumerate(ACTIONS)}
+#   # ACTIONS_ID['NA'] = -1
 
-  # create a dictionary containg frame num corresponding to video names
-  FRAMES_NUM = {}
-  #for name in glob('/content/drive/MyDrive/Train-Set/*/*/Extracted-Frames-1280x720/*'):
-  for name in glob(path):
-    key = name.split('/')[-1]
-    FRAMES_NUM[key] = len(os.listdir(name))
+#   # create a dictionary containg frame num corresponding to video names
+#   FRAMES_NUM = {}
+#   #for name in glob('/content/drive/MyDrive/Train-Set/*/*/Extracted-Frames-1280x720/*'):
+#   for name in glob(path):
+#     key = name.split('/')[-1]
+#     FRAMES_NUM[key] = len(os.listdir(name))
 
-  return ACTIONS_ID, FRAMES_NUM
+#   return ACTIONS_ID, FRAMES_NUM
+
+
+ACTIONS=['NA','Han', 'Hugging', 'Reading', 'Drinking',
+         'Pushing/Pulling', 'Carrying', 'Calling','Running',
+         'Walking', 'Lying', 'Sitting', 'Standing']
+
+ACTIONS_ID={a:i for i,a in enumerate(ACTIONS)}
+# ACTIONS_ID['NA'] = -1
+
+# create a dictionary containg frame num corresponding to video names
+FRAMES_NUM = {}
+#for name in glob('/content/drive/MyDrive/Train-Set/*/*/Extracted-Frames-1280x720/*'):
+for name in glob(path):
+  key = name.split('/')[-1]
+  FRAMES_NUM[key] = len(os.listdir(name))
 
 ######################
 
 def okutama_read_annotations(path,vidname, img_path):
     annotations={}
     path=path + '/%s.txt' % vidname
-    ACTIONS_ID, FRAMES_NUM = get_constants('/content/drive/MyDrive/Drone-Action/all-frames/*')
+    # ACTIONS_ID, FRAMES_NUM = get_constants('/content/drive/MyDrive/Drone-Action/all-frames/*')
 
 
     with open(path,mode='r') as f:
@@ -106,7 +121,7 @@ class OkutamaDataset(data.Dataset):
         
         self.is_training=is_training
 
-        ACTIONS_ID, FRAMES_NUM = get_constants('/content/drive/MyDrive/Drone-Action/all-frames/*')
+        #ACTIONS_ID, FRAMES_NUM = get_constants('/content/drive/MyDrive/Drone-Action/all-frames/*')
         #self.batch_per_video = int(len(self.frames) / self.num_frames)
 
     
