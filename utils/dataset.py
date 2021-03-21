@@ -20,7 +20,7 @@ def get_constants(path):
            'Walking', 'Lying', 'Sitting', 'Standing']
 
   ACTIONS_ID={a:i for i,a in enumerate(ACTIONS)}
-  ACTIONS_ID['NA'] = -1
+  # ACTIONS_ID['NA'] = -1
 
   # create a dictionary containg frame num corresponding to video names
   FRAMES_NUM = {}
@@ -36,8 +36,6 @@ def get_constants(path):
 def okutama_read_annotations(path,vidname, img_path):
     annotations={}
     path=path + '/%s.txt' % vidname
-
-    ACTIONS_ID, FRAMES_NUM = get_constants(img_path)
     
     with open(path,mode='r') as f:
         frame_id=None
@@ -64,9 +62,9 @@ def okutama_read_annotations(path,vidname, img_path):
               if str_actions:
                 actions.append(ACTIONS_ID[str_actions])
               else:
-                actions.append(-1) # -1 --> NA
+                actions.append(0) # 0 --> NA
               x1, y1, x2, y2 = (int(values[i])  for i  in range(1,5))
-              W,H=(3840, 2160)
+              H,W = (2160, 3840)
               
               bboxes.append((x1/W,y1/H,x2/W,y2/H))
 
@@ -105,8 +103,6 @@ class OkutamaDataset(data.Dataset):
         self.num_frames=num_frames
         
         self.is_training=is_training
-
-        ACTIONS_ID, FRAMES_NUM = get_constants(images_path)
         #self.batch_per_video = int(len(self.frames) / self.num_frames)
 
     
@@ -123,8 +119,7 @@ class OkutamaDataset(data.Dataset):
         """
         Generate one sample of the dataset
         """
-        if self.frames[index * self.num_frames][0] == self.frames[(index+1)*self.num_frames][0]: 
-          # conditional check to get frames from same video
+        if self.frames[index * self.num_frames][0] == self.frames[(index+1)*self.num_frames][0]:
           select_frames=self.get_frames(self.frames[index * self.num_frames])
           
           sample=self.load_samples_sequence(select_frames)
@@ -138,6 +133,10 @@ class OkutamaDataset(data.Dataset):
           # 10 - (2272 -2270) = 8 frames 
           # print("no. of frames: ", FRAMES_NUM[self.frames[index * self.num_frames][0]])
           # print(index*self.num_frames)
+
+          # print(diff)
+
+          vidname, src_fid = self.frames[index * self.num_frames]
 
 
           sample_frames = [i for i in range(src_fid - diff, src_fid -diff + self.num_frames)]
@@ -170,7 +169,7 @@ class OkutamaDataset(data.Dataset):
         Returns:
             tensors
         """
-        OW, OH=self.feature_size
+        OH, OW = self.feature_size
         
         images, bboxes = [], []
         actions = []
@@ -181,7 +180,7 @@ class OkutamaDataset(data.Dataset):
 
             if os.path.exists(self.images_path + '/%s/%d.jpg'%(vidname,fid)):
               img = Image.open(self.images_path + '/%s/%d.jpg'%(vidname,fid))
-            #CONDITION NOT NECESSARY
+
             else:
               img = Image.open(self.images_path + '/%s/%d.jpg'%(vidname,fid - 1))
 
@@ -194,7 +193,7 @@ class OkutamaDataset(data.Dataset):
             
             temp_boxes=[]
             for box in self.anns[vidname][src_fid]['bboxes']:
-                x1,y1,x2,y2 = box
+                x1,y1,x2,y2=box
                 w1,h1,w2,h2 = x1*OW, y1*OH, x2*OW, y2*OH  
                 temp_boxes.append((w1,h1,w2,h2))
                 
@@ -202,13 +201,12 @@ class OkutamaDataset(data.Dataset):
             bboxes_num.append(len(temp_boxes))
 
             if len(temp_boxes) > self.num_boxes:
-              print('Error: More than 12 actions present')
-              print("No. of actions are : ", len(temp_boxes))
+              #print('Error: More than 12 actions present')
               temp_boxes = temp_boxes[:self.num_boxes]
             
             while len(temp_boxes)!=self.num_boxes:
                 temp_boxes.append((0,0,0,0))
-                temp_actions.append(-1)
+                temp_actions.append(0)
             
             bboxes.append(temp_boxes)
             actions.append(temp_actions)
@@ -221,7 +219,7 @@ class OkutamaDataset(data.Dataset):
         actions=np.array(actions,dtype=np.int16).reshape(-1,self.num_boxes)
         
         #convert to pytorch tensor
-        images=torch.from_numpy(images, ).float()
+        images=torch.from_numpy(images).float()
         bboxes=torch.from_numpy(bboxes).float()
         actions=torch.from_numpy(actions).long()
         bboxes_num=torch.from_numpy(bboxes_num).int()
@@ -231,9 +229,9 @@ class OkutamaDataset(data.Dataset):
 
 def get_dataloaders(train_seqs, test_seqs, train_images_path, test_images_path):
 
-  s = 5
-  image_size = 720, 420  #input image size
-  out_size = 157, 87  #output feature map size of backbone
+  #s = 5
+  image_size = (720, 420)  #input image size
+  out_size = 87, 157  #output feature map size of backbone
 
 
   # train data

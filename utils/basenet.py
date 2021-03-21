@@ -10,7 +10,7 @@ import numpy as np
 
 from utils.backbone import *
 from utils.datautils import *
-from roi_align_n.roi_align import *      # RoIAlign module
+from torchvision.ops import roi_align
 
 class Basenet_okutama(nn.Module):
     """
@@ -19,24 +19,24 @@ class Basenet_okutama(nn.Module):
     def __init__(self):
         super(Basenet_okutama, self).__init__()
         
-        D=1056 #output feature map channel of backbone
+        D=512 #output feature map channel of backbone
         K=5 #crop size of roi align
-        NFB=1024
+        NFB=256
         
-        # self.backbone=MyInception_v3(transform_input=False,pretrained=True)
+        #self.backbone=MyInception_v3(transform_input=False,pretrained=True)
         self.backbone=MyVGG16(pretrained=True)
         
         # if not self.cfg.train_backbone:
         #     for p in self.backbone.parameters():
         #         p.requires_grad=False
-        crop_size = 5 , 5
-        self.roi_align=RoIAlign(*crop_size)
+        self.crop_size = (5, 5)
+        #self.roi_align=roi_align(output_size=crop_size)
         
         self.fc_emb_1=nn.Linear(K*K*D,NFB)
         self.dropout_emb_1 = nn.Dropout(p=0.3)
         self.nl_emb_1=nn.LayerNorm([NFB])
         
-        num_actions = 12
+        num_actions = 13
 
         self.fc_actions=nn.Linear(NFB,num_actions)
         # self.fc_activities=nn.Linear(NFB,self.cfg.num_activities)
@@ -66,26 +66,35 @@ class Basenet_okutama(nn.Module):
     def forward(self,batch_data):
 
         images_in, boxes_in, bboxes_num_in = batch_data
+        # print(images_in.shape)
         # print("shape of bboxes_num_in before = ",bboxes_num_in.shape)
         # print("bboxes_num_in before = ",bboxes_num_in)
         # read config parameters
         B=images_in.shape[0]
-        # print("B = ", B)
+        #print("B = ", B)
         
         T=images_in.shape[1]
-        # print("T = ", T)
-        W, H = 720, 420 # input image size
-        OW, OH = 157, 87 # output feature dimenion (backbone output)
-        MAX_N=12 # no. of actions per frame
-        NFB=1024 # features of boxes
+        #print("T = ", T)
+        #s = 5
+        H,W = 420, 720
+        OH, OW=87, 157
+        MAX_N=12
+        NFB=256 #1024
         EPS=1e-5
         
-        D=1056 # features dimenion (emb layer)
-        K=5 #crop size
+        #D=1056
+        D=512
+        K=5
         
         # Reshape the input data
-        images_in_flat=torch.reshape(images_in,(B*T,3,W, H))  #B*T, 3, H, W
-        boxes_in=boxes_in.reshape(B*T,MAX_N,4)
+        images_in_flat=torch.reshape(images_in,(B*T,3,H,W))  #B*T, 3, H, W
+        # boxes_in=boxes_in.reshape(B*T,MAX_N,4)
+        boxes_in = torch.reshape(boxes_in,(B*T, MAX_N,4))
+        boxes_in_list = []
+        for box_tensor in boxes_in:
+            boxes_in_list.append(box_tensor)
+            assert box_tensor.size(1) == 4
+
                 
         # Use backbone to extract features of images_in
         # Pre-precess first
@@ -99,14 +108,14 @@ class Basenet_okutama(nn.Module):
         features_multiscale=[]
         for features in outputs:
             # print(features.shape)
-            if features.shape[2:4]!=torch.Size([OW,OH]):
-                features=F.interpolate(features,size=(OW,OH),mode='bilinear',align_corners=True)
+            if features.shape[2:4]!=torch.Size([OH,OW]):
+                features=F.interpolate(features,size=(OH,OW),mode='bilinear',align_corners=True)
             features_multiscale.append(features)
         
-        features_multiscale=torch.cat(features_multiscale,dim=1)  #B*T, D, OW, OH
+        features_multiscale=torch.cat(features_multiscale,dim=1)  #B*T, D, OH, OW
         # print("shape of features_multiscale = ", features_multiscale.shape)
 
-        boxes_in_flat=torch.reshape(boxes_in,(B*T*MAX_N,4))  #B*T*MAX_N, 4
+        # boxes_in = torch.reshape(boxes_in,(B*T*MAX_N,4))  #B*T*MAX_N, 4
         # print("shape of boxes_in_flat = ",boxes_in_flat.shape)
         # print("shape of boxes_in = ",boxes_in.shape)
             
@@ -117,11 +126,12 @@ class Basenet_okutama(nn.Module):
         # print("shape of boxes_idx_flat = ",boxes_idx_flat.shape)
 
         # RoI Align
-        boxes_in_flat.requires_grad=False
+        #boxes_in_flat.requires_grad=False
         boxes_idx_flat.requires_grad=False
-        boxes_features_all=self.roi_align(features_multiscale,
-                                            boxes_in_flat,
-                                            boxes_idx_flat)  #B*T*MAX_N, D, K, K,
+        boxes_features_all=roi_align(features_multiscale,
+                                    boxes_in_list,
+                                    # boxes_idx_flat, 
+                                    output_size=self.crop_size)  #B*T*MAX_N, D, K, K,
         # print("shape of boxes_features_all before roi_align = ",boxes_features_all.shape)
         boxes_features_all=boxes_features_all.reshape(B*T,MAX_N,-1)  #B*T,MAX_N, D*K*K
         # print("shape of boxes_features_all after roi_align = ",boxes_features_all.shape)
@@ -156,8 +166,8 @@ class Basenet_okutama(nn.Module):
             boxes_states_flat=boxes_states.reshape(-1,NFS)  #1*N, NFS
             # print("shape of boxes_state_flat = ",boxes_states_flat.shape)
             actn_score=self.fc_actions(boxes_states_flat)  #1*N, actn_num
-
-            final_actn_score = torch.ones(MAX_N) * -1
+            
+            final_actn_score = torch.ones(MAX_N) * 0
             # temp_actn_score = actn_score.cpu().numpy()
             temp_actn_score = torch.argmax(actn_score,dim=1)
             final_actn_score[:N] = temp_actn_score
@@ -165,7 +175,12 @@ class Basenet_okutama(nn.Module):
 
             # print("shape of actn_score = ",actn_score.shape)
             # actions_scores.append(actn_score)
-            # print(len(actions_scores)
+            # print(len(actions_scores))
+            # # Predict activities
+            # boxes_states_pooled,_=torch.max(boxes_states,dim=1)  #1, NFS
+            # boxes_states_pooled_flat=boxes_states_pooled.reshape(-1,NFS)  #1, NFS
+            # acty_score=self.fc_activities(boxes_states_pooled_flat)  #1, acty_num
+            # activities_scores.append(acty_score)
 
         # npaction_scores = np.array(actions_scores)
         # print("numpy array shape = ",npaction_scores[0].shape)
@@ -175,4 +190,4 @@ class Basenet_okutama(nn.Module):
         # print(actions_scores.shape)
         # print(activities_scores.shape)
 
-        return actions_scores
+        return actn_score, actions_scores
