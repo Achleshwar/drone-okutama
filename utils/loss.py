@@ -22,7 +22,12 @@ def binary_cross_entropy(predictions, target):
         for nbox in range(predictions.size(1)):
             if nbox < 12:
                 target_onehot = nn.functional.one_hot(torch.tensor(target[bt][nbox].int().item()), num_classes=13)
-                loss += bce_criterion(predictions[bt][nbox].float(), target_onehot.float())
+                if torch.cuda.is_available():
+                    target_onehot = target.to(device = "cuda")
+
+                else:
+                    target_onehot = target.to(device = "cpu")
+                            loss += bce_criterion(predictions[bt][nbox].float(), target_onehot.float())
     loss = loss / (predictions.size(0) * predictions.size(1))
     
     return loss 
